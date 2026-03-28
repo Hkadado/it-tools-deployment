@@ -3,3 +3,12 @@ playwright-report
 coverage
 dist
 test-results
+node_modules
+dist
+.git
+.gitignore
+README.md
+npm-debug.log
+pnpm-debug.log
+.vscode
+.DS_Store
