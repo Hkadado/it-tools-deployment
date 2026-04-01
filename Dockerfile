@@ -5,10 +5,10 @@ WORKDIR /app
 
 RUN corepack enable
 
-COPY package.json pnpm-lock.yaml ./
+COPY app/package.json app/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-COPY . .
+COPY app/ .
 RUN pnpm build
 
 # ---------- Runtime stage ----------
@@ -18,14 +18,16 @@ WORKDIR /app
 
 RUN corepack enable
 
-COPY package.json pnpm-lock.yaml ./
+COPY app/package.json app/pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.js ./server.js
 
-ENV PORT=80
+ENV PORT=8080
 
-EXPOSE 80
+EXPOSE 8080
+
+USER node
 
 CMD ["node", "server.js"]
