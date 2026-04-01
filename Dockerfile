@@ -28,6 +28,4 @@ ENV PORT=80
 
 EXPOSE 80
 
-USER node
-
 CMD ["node", "server.js"]
