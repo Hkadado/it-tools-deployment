@@ -321,3 +321,16 @@ resource "aws_route53_record" "app_alias" {
     evaluate_target_health = true
   }
 }
+
+resource "aws_ecr_repository" "app" {
+  name                 = var.project_name
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-ecr"
+  }
+}

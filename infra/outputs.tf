@@ -21,3 +21,7 @@ output "ecs_service_name" {
 output "app_url" {
   value = "https://${var.subdomain}.${var.domain_name}"
 }
+
+output "ecr_repository_url" {
+  value = aws_ecr_repository.app.repository_url
+}

@@ -7,4 +7,11 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "s3" {
+    bucket         = "hasan-it-tools-tf-state-820242908024-us-east-1-an"
+    key            = "it-tools-app/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+  }
 }
