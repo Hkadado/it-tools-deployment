@@ -1,0 +1,122 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  TF_WORKING_DIR: infra
+  APP_URL: https://tm.hasankadado.com/health
+  ECR_REPOSITORY: it-tools-app
+  PROJECT_NAME: it-tools-app
+  CONTAINER_PORT: 8080
+  DOMAIN_NAME: hasankadado.com
+  SUBDOMAIN: tm
+
+jobs:
+  build-and-push:
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+    outputs:
+      image_uri: ${{ steps.image.outputs.image_uri }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::820242908024:role/github-actions-it-tools-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image
+        id: image
+        env:
+          AWS_ACCOUNT_ID: "820242908024"
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          IMAGE_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+          docker build -t "${ECR_REPOSITORY}:${IMAGE_TAG}" .
+          docker tag "${ECR_REPOSITORY}:${IMAGE_TAG}" "${IMAGE_URI}"
+          docker push "${IMAGE_URI}"
+
+          echo "image_uri=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
+
+  terraform-deploy:
+    name: Terraform Deploy
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::820242908024:role/github-actions-it-tools-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: Terraform Fmt Check
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform plan \
+            -var="aws_region=${AWS_REGION}" \
+            -var="project_name=${PROJECT_NAME}" \
+            -var="container_image=${{ needs.build-and-push.outputs.image_uri }}" \
+            -var="container_port=${CONTAINER_PORT}" \
+            -var="domain_name=${DOMAIN_NAME}" \
+            -var="subdomain=${SUBDOMAIN}"
+
+      - name: Terraform Apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform apply -auto-approve \
+            -var="aws_region=${AWS_REGION}" \
+            -var="project_name=${PROJECT_NAME}" \
+            -var="container_image=${{ needs.build-and-push.outputs.image_uri }}" \
+            -var="container_port=${CONTAINER_PORT}" \
+            -var="domain_name=${DOMAIN_NAME}" \
+            -var="subdomain=${SUBDOMAIN}"
+
+  post-deploy-check:
+    name: Post-Deploy Health Check
+    runs-on: ubuntu-latest
+    needs: terraform-deploy
+
+    steps:
+      - name: Check health endpoint
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "${APP_URL}"
