@@ -37,3 +37,5 @@ salt
 infra/.terraform/
 infra/*.tfstate
 infra/*.tfstate.*
+infra/migrate_state.sh
+infra/backup-state.json
