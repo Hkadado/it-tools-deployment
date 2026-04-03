@@ -11,7 +11,7 @@ RUN pnpm install --frozen-lockfile
 COPY app/ .
 RUN pnpm build
 
-# ---------- Runtime stage ----------
+# runtime stage
 FROM node:22-alpine AS runtime
 
 WORKDIR /app
