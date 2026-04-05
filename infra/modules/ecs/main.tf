@@ -113,6 +113,8 @@ resource "aws_ecs_service" "app" {
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
 
+  force_new_deployment = true
+
   network_configuration {
     subnets          = var.subnet_ids
     security_groups  = [aws_security_group.ecs_sg.id]
