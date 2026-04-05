@@ -7,9 +7,6 @@ const { isDarkTheme } = toRefs(styleStore);
 </script>
 
 <template>
-
-
-
   <c-tooltip :tooltip="isDarkTheme ? $t('home.nav.lightMode') : $t('home.nav.darkMode')" position="bottom">
     <c-button circle variant="text" :aria-label="$t('home.nav.mode')" @click="() => styleStore.toggleDark()">
       <n-icon v-if="isDarkTheme" size="25" :component="IconSun" />
