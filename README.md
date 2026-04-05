@@ -1,133 +1,101 @@
-<picture>
-    <source srcset="./.github/logo-dark.png" media="(prefers-color-scheme: light)">
-    <source srcset="./.github/logo-white.png" media="(prefers-color-scheme: dark)">
-    <img src="./.github/logo-dark.png" alt="logo">
-</picture>
+# IT Tools Deployment (AWS + Terraform + CI/CD)
 
-<p align="center">
-Useful tools for developer and people working in IT. <a href="https://it-tools.tech">Try it!</a>
-</p>
+## Overview
 
-## Functionalities and roadmap
+This project deploys a containerized web application (IT Tools) on AWS ECS (Fargate) using scalable, production-style infrastructure.
 
-Please check the [issues](https://github.com/CorentinTh/it-tools/issues) to see if some feature listed to be implemented.
+It implements secure best practices including HTTPS via ALB + ACM, IAM roles, and non-root container execution.
 
-You have an idea of a tool? Submit a [feature request](https://github.com/CorentinTh/it-tools/issues/new/choose)!
+Infrastructure is fully managed with Terraform, while a GitHub Actions CI/CD pipeline automates image builds, deployments, and updates.
 
-## Self host
+---
 
-Self host solutions for your homelab
+## Features
 
-**From docker hub:**
+- Infrastructure as Code using Terraform (VPC, ECS, ALB, ECR, ACM, Route53)
+- CI/CD pipeline with GitHub Actions
+- Secure AWS authentication via OIDC (no long-lived credentials)
+- Dockerized application deployed on ECS Fargate
+- HTTPS enabled via ACM + ALB
+- Remote Terraform state stored in S3
+- Multi-AZ deployment for high availability
 
-```sh
-docker run -d --name it-tools --restart unless-stopped -p 8080:80 corentinth/it-tools:latest
-```
+---
 
-**From github packages:**
+## Architecture
 
-```sh
-docker run -d --name it-tools --restart unless-stopped -p 8080:80 ghcr.io/corentinth/it-tools:latest
-```
+![Architecture Diagram](app/docs/architecture.png)
 
-**Other solutions:**
+---
 
-- [Cloudron](https://www.cloudron.io/store/tech.ittools.cloudron.html)
-- [Tipi](https://www.runtipi.io/docs/apps-available)
-- [Unraid](https://unraid.net/community/apps?q=it-tools)
+## Architecture Overview
 
-## Contribute
+- Route53 routes user traffic to the Application Load Balancer (ALB)
+- ALB terminates HTTPS (ACM) and forwards requests to ECS tasks
+- ECS Fargate runs the application across multiple availability zones
+- ECS tasks pull container images from Amazon ECR
+- Terraform provisions and manages all AWS infrastructure
+- Terraform state is stored remotely in S3
+- GitHub Actions handles CI/CD:
+  - Builds Docker image
+  - Pushes to ECR
+  - Runs Terraform (plan/apply)
+- Authentication to AWS is handled via OIDC and IAM role assumption
 
-### Recommended IDE Setup
+---
 
-[VSCode](https://code.visualstudio.com/) with the following extensions:
+## CI/CD Pipeline
 
-- [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur)
-- [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
-- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-- [i18n Ally](https://marketplace.visualstudio.com/items?itemName=lokalise.i18n-ally)
+1. Push to `main` triggers GitHub Actions
+2. Workflow authenticates to AWS via OIDC
+3. Docker image is built and tagged with commit SHA
+4. Image is pushed to Amazon ECR
+5. Terraform runs:
+   - fmt
+   - validate
+   - plan
+   - apply
+6. ECS service deploys updated container
+7. Health check verifies deployment
 
-with the following settings:
+---
 
-```json
-{
-  "editor.formatOnSave": false,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
-  "i18n-ally.localesPaths": ["locales", "src/tools/*/locales"],
-  "i18n-ally.keystyle": "nested"
-}
-```
+## Live Application
 
-### Type Support for `.vue` Imports in TS
+https://tm.hasankadado.com
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+---
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+## Deployment Proof
 
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+### Application Running
 
-### Project Setup
+![App Screenshot](app/docs/app.png)
 
-```sh
+### CI/CD Pipeline
+
+![Pipeline Screenshot](app/docs/pipeline.png)
+
+---
+
+## Tech Stack
+
+- AWS (ECS, Fargate, ALB, ECR, Route53, ACM, S3, IAM)
+- Terraform
+- Docker
+- GitHub Actions
+- Node.js / Express
+
+---
+
+## Local Development
+
+```bash
 pnpm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-pnpm dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
 pnpm build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-pnpm test
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-pnpm lint
-```
-
-### Create a new tool
-
-To create a new tool, there is a script that generate the boilerplate of the new tool, simply run:
-
-```sh
-pnpm run script:create:tool my-tool-name
-```
-
-It will create a directory in `src/tools` with the correct files, and a the import in `src/tools/index.ts`. You will just need to add the imported tool in the proper category and develop the tool.
-
-## Contributors
-
-Big thanks to all the people who have already contributed!
-
-[![contributors](https://contrib.rocks/image?repo=corentinth/it-tools&refresh=1)](https://github.com/corentinth/it-tools/graphs/contributors)
+node server.js
 
 ## Credits
 
-Coded with ❤️ by [Corentin Thomasset](https://corentin.tech?utm_source=it-tools&utm_medium=readme).
-
-This project is continuously deployed using [vercel.com](https://vercel.com).
-
-Contributor graph is generated using [contrib.rocks](https://contrib.rocks/preview?repo=corentinth/it-tools).
-
-<a href="https://www.producthunt.com/posts/it-tools?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-it&#0045;tools" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=345793&theme=light" alt="IT&#0032;Tools - Collection&#0032;of&#0032;handy&#0032;online&#0032;tools&#0032;for&#0032;devs&#0044;&#0032;with&#0032;great&#0032;UX | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-<a href="https://www.producthunt.com/posts/it-tools?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-it&#0045;tools" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=345793&theme=light&period=daily" alt="IT&#0032;Tools - Collection&#0032;of&#0032;handy&#0032;online&#0032;tools&#0032;for&#0032;devs&#0044;&#0032;with&#0032;great&#0032;UX | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-
-## License
-
-This project is under the [GNU GPLv3](LICENSE).
+This project deploys the open-source IT Tools application:
+https://github.com/CorentinTh/it-tools
