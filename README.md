@@ -94,6 +94,9 @@ https://tm.hasankadado.com
 pnpm install
 pnpm build
 node server.js
+```
+
+Visit http://localhost:8080/
 
 ## Credits
 
