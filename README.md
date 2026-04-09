@@ -60,12 +60,6 @@ Infrastructure is fully managed with Terraform, while a GitHub Actions CI/CD pip
 
 ---
 
-## Live Application
-
-https://tm.hasankadado.com
-
----
-
 ## Deployment Proof
 
 ### Application Running
