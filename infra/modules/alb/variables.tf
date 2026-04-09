@@ -29,3 +29,9 @@ variable "certificate_arn" {
   type        = string
   default     = null
 }
+
+variable "enable_https" {
+  description = "Whether to create HTTPS listener"
+  type        = bool
+  default     = true
+}

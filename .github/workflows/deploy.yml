@@ -119,4 +119,20 @@ jobs:
       - name: Check health endpoint
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error "${APP_URL}"
+          echo "Waiting for deployment to be ready..."
+
+          # Retry health check for up to 5 minutes
+          for i in {1..30}; do
+            echo "Health check attempt $i/30..."
+            
+            if curl --fail --silent --show-error "${APP_URL}"; then
+              echo "Health check passed!"
+              exit 0
+            else
+              echo "Health check failed, waiting 10 seconds..."
+              sleep 10
+            fi
+          done
+
+          echo "Health check failed after 30 attempts (5 minutes)"
+          exit 1

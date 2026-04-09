@@ -23,6 +23,7 @@ module "alb" {
   subnet_ids        = module.vpc.public_subnet_ids
   container_port    = var.container_port
   health_check_path = "/health"
+  enable_https      = true
   certificate_arn   = module.acm.certificate_arn
 }
 
